@@ -34,6 +34,8 @@ Version 0.1.4 was checked in isolated Chrome 153.0.8010.36: ten fixture/popup ch
 
 ## Development
 
+Agents and contributors: read [AGENTS.md](AGENTS.md) for the architecture, state/message contracts, modification workflow and validation tools.
+
 No build step is required for runtime files. Node/Puppeteer is used only for validation. `npm ci`, `node tests/smoke.mjs`, and `node tests/youtube.mjs` run the isolated browser checks. The live YouTube check requires network access. `npm test` packages production files and runs the static extension validator.
 
 The extension requests `storage` plus static content-script access to the listed services. It has no network client or service worker. Popup messages update a content script in the video page; that script modifies only selected video/container CSS properties and stores requested preferences with `chrome.storage.local`.
