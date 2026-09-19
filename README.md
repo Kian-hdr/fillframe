@@ -1,4 +1,8 @@
-# Fillframe
+<p align="center">
+  <img src="assets/icons/icon128.png" width="96" height="96" alt="Fillframe app icon">
+</p>
+
+<h1 align="center">Fillframe</h1>
 
 An experimental, free Manifest V3 extension for framing web video. No account, paywall, telemetry or runtime dependency.
 
