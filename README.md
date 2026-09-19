@@ -6,6 +6,10 @@
 
 An experimental, free Manifest V3 extension for framing web video. No account, paywall, telemetry or runtime dependency.
 
+## Set up with an AI assistant
+
+Copy the [setup prompt](SETUP-PROMPT.md) into your coding assistant. It covers preparation, installation and verification on your computer, including any manual browser steps.
+
 ## Install locally
 
 1. Run `python3 scripts/package.py`, or use the supplied release folder.
