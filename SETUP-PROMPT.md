@@ -1,0 +1,21 @@
+# Set up Fillframe with an AI assistant
+
+Copy the prompt below into a coding assistant that can access your computer. It can prepare the extension and guide installation. Browser security restrictions may require you to perform the final **Load unpacked** step yourself.
+
+```text
+Set up Fillframe on my computer from https://github.com/Kian-hdr/fillframe.
+
+Goal: install the experimental Chrome extension and verify that its YouTube toolbar icon immediately toggles proportional crop-to-fill without opening a controls panel.
+
+1. Inspect my OS, available desktop Chromium browsers and any existing Fillframe checkout/install. Ask which browser/profile only if ambiguous. Use a permanent user-owned folder, not a temporary download/cache folder. Do not overwrite an existing checkout or discard local changes.
+2. Fetch the repository, read README.md, SETUP-PROMPT.md, manifest.json and the packaging script, and inspect the source/permissions before running scripts. Use the repository’s actual current version; do not assume a release ZIP or Web Store listing exists. Preserve LICENSE and THIRD-PARTY-LICENSE.txt.
+3. For a new checkout, clone https://github.com/Kian-hdr/fillframe.git into the chosen folder. The extension itself has no runtime dependencies or compilation step. Prefer running the inspected `python3 scripts/package.py` to prepare release/Fillframe, then `python3 scripts/validate_extension.py release/Fillframe`. On Windows, use an available Python 3 launcher such as `py -3`. If Python is unavailable, the repository root can be loaded directly because it contains manifest.json and the referenced static files. Node/Puppeteer are optional developer-test dependencies, not required for installation.
+4. Install in the chosen browser through its supported extension-management UI: enable Developer mode, select Load unpacked, and choose release/Fillframe (or the repository root if using the direct-load route). Explain the requested storage and YouTube/Netflix/Disney+ page-access permissions. Respect browser/tool policy and any mandatory confirmations. If automation cannot access extension management, give me the exact permanent folder path and the shortest manual steps, then wait for me to complete installation. Do not bypass restrictions, edit browser profile databases, use hidden injection as a substitute, or disable security protections.
+5. Refresh a YouTube video tab after installation. Check for conflicts with other video-zoom extensions; ask before disabling another extension. Verify our rectangle/diagonal icon appears beside fullscreen. Click once: it should fill the current player area without stretching or opening controls. In fullscreen, the target is the fullscreen player area. Click again: original framing should return. Check resize/fullscreen transitions, normal playback, and that the tooltip matches the player. Use a video and viewport with different aspect ratios so cropping is actually observable. Do not change my account, history, likes, subscriptions, or unrelated settings.
+6. Report separately what was verified in my actual browser, what was tested only in an isolated browser/fixture, and what remains unverified. If you cannot operate my browser, do not claim the extension is installed or working. Give me a short manual verification checklist instead.
+7. Explain updates and removal: keep the installation folder in place; preserve local changes when updating source; regenerate the package if using release/Fillframe; click Reload on the extension and refresh video tabs. Remove through the browser’s Extensions page and refresh affected tabs to clear injected controls.
+
+Limits: YouTube-first experimental project. Netflix and Disney+ origins are enabled but compatibility is not established by the YouTube tests. Other browser brands and physical multi-monitor transitions need separate verification. No automatic detection of black bars encoded inside video frames; manual picture ratios/zoom are available through the extension popup. Do not promise Safari, Firefox, mobile Chrome, all websites, DRM bypass, or a Chrome Web Store release.
+
+Finish with the installed version, exact permanent installation folder, browser/profile, completed checks and any remaining user action. Do not publish, upload my browsing data, or create accounts as part of setup.
+```
