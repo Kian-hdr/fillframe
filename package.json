@@ -1,0 +1,14 @@
+{
+  "name": "fillframe",
+  "version": "0.1.4",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "python3 scripts/package.py",
+    "test": "python3 scripts/package.py && python3 scripts/validate_extension.py release/Fillframe",
+    "validate:extension": "python3 scripts/validate_extension.py ."
+  },
+  "devDependencies": {
+    "puppeteer": "^25.11.0"
+  }
+}

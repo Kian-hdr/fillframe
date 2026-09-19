@@ -1,0 +1,14 @@
+import puppeteer from 'puppeteer';
+import assert from 'node:assert/strict';
+import {mkdir,writeFile} from 'node:fs/promises';
+await mkdir('output/playwright',{recursive:true});
+const b=await puppeteer.launch({headless:true,enableExtensions:true,pipe:true});
+try {await b.installExtension(process.cwd());const p=await b.newPage();await p.setViewport({width:1680,height:900});await p.goto('https://www.youtube.com/watch?v=aqz-KE-bpKQ',{waitUntil:'domcontentloaded'});await p.waitForSelector('[data-fillframe-toolbar]');await new Promise(r=>setTimeout(r,1500));for(const f of p.frames())for(const el of await f.$$('button'))if((await el.evaluate(e=>e.textContent.trim()))==='Reject all'){await el.click();break;}
+const styles=el=>{const text=el.querySelector('.ytp-tooltip-text'),wrapper=el.querySelector('.ytp-tooltip-text-wrapper');return {font:getComputedStyle(text).font,color:getComputedStyle(text).color,background:getComputedStyle(wrapper).backgroundColor,radius:getComputedStyle(wrapper).borderRadius,padding:getComputedStyle(wrapper).padding};};
+await p.hover('.ytp-settings-button');await new Promise(r=>setTimeout(r,600));const native=await p.$eval('.ytp-tooltip:not([data-fillframe-tooltip])',styles);await p.screenshot({path:'output/playwright/native-tooltip.png'});
+await p.hover('[data-fillframe-toolbar]');await p.waitForSelector('[data-fillframe-tooltip]',{visible:true});const ours=await p.$eval('[data-fillframe-tooltip]',styles);assert.deepEqual(ours,native);assert.equal(await p.$eval('[data-fillframe-toolbar]',el=>el.hasAttribute('title')),false);await p.screenshot({path:'output/playwright/fillframe-tooltip.png'});
+await p.hover('#movie_player');await p.waitForFunction(()=>document.querySelector('[data-fillframe-tooltip]').style.display==='none');
+await p.$eval('#movie_player',el=>el.requestFullscreen());await new Promise(r=>setTimeout(r,500));await p.hover('[data-fillframe-toolbar]');await p.waitForSelector('[data-fillframe-tooltip]',{visible:true});await p.screenshot({path:'output/playwright/fillframe-tooltip-fullscreen.png'});
+await p.hover('#movie_player');await p.focus('.ytp-fullscreen-button');await p.keyboard.down('Shift');await p.keyboard.press('Tab');await p.keyboard.up('Shift');await p.waitForSelector('[data-fillframe-tooltip]',{visible:true});await p.keyboard.press('Escape');await p.waitForFunction(()=>document.querySelector('[data-fillframe-tooltip]').style.display==='none');assert(await p.evaluate(()=>!!document.fullscreenElement));
+const result={browser:await b.version(),native,ours,checks:['computed font/color/background/radius/padding match native Settings tooltip','browser title tooltip removed','hover and pointer-leave work','fullscreen tooltip visible','keyboard focus shows tooltip; Escape dismisses without leaving fullscreen']};await writeFile('output/playwright/tooltip-results.json',JSON.stringify(result,null,2));console.log(result);
+}finally{await b.close()}
