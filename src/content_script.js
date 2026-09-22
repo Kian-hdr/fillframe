@@ -3,7 +3,7 @@
   globalThis.__fillframe = true;
   const defaults = () => ({ mode: 'original', ratio: 'auto', zoom: 1, x: 0, y: 0, remember: false });
   let state = defaults(), video, container, host, root, scheduled = false, key = '', loadID = 0;
-  let toolbarButton, tooltip;
+  let toolbarButton, tooltip, cropMotion;
   const modified = new Map();
   const allowed = ['auto','1.7777777777777777','1.6','2.3333333333333335','2.39','3.5555555555555554'];
   function clean(input) {
@@ -28,6 +28,63 @@
     }
     modified.clear();
   }
+  function stopCropMotion() {
+    if (!cropMotion) return;
+    cancelAnimationFrame(cropMotion.frame);
+    cropMotion = null;
+  }
+  function pictureRect() {
+    const player = container.getBoundingClientRect(), box = video.getBoundingClientRect();
+    const scaleX = player.width / container.clientWidth || 1;
+    const scaleY = player.height / container.clientHeight || 1;
+    let width = box.width / scaleX, height = box.height / scaleY;
+    let left = (box.left - player.left) / scaleX, top = (box.top - player.top) / scaleY;
+    if (['contain','scale-down'].includes(getComputedStyle(video).objectFit)) {
+      const aspect = video.videoWidth / video.videoHeight;
+      const fittedWidth = Math.min(width, height * aspect);
+      const fittedHeight = fittedWidth / aspect;
+      left += (width - fittedWidth) / 2;
+      top += (height - fittedHeight) / 2;
+      width = fittedWidth; height = fittedHeight;
+    }
+    return {width,height,left,top};
+  }
+  function fillRect() {
+    const w=container.clientWidth,h=container.clientHeight;
+    const source=video.videoWidth/video.videoHeight;
+    const target=state.ratio==='auto'?w/h:Number(state.ratio);
+    // A manual content ratio describes the useful picture inside encoded black bars.
+    let usefulW=video.videoWidth,usefulH=video.videoHeight;
+    if(state.ratio!=='auto') {if(target>source) usefulH=usefulW/target; else usefulW=usefulH*target;}
+    const scale=Math.max(w/usefulW,h/usefulH)*state.zoom;
+    const width=video.videoWidth*scale,height=video.videoHeight*scale;
+    return {width,height,left:(w-width)/2+state.x*Math.max(0,(width-w)/2),top:(h-height)/2+state.y*Math.max(0,(height-h)/2)};
+  }
+  function placeVideo(rect) {
+    for(const [property,value] of Object.entries({position:'absolute',width:`${rect.width}px`,height:`${rect.height}px`,left:`${rect.left}px`,top:`${rect.top}px`,'max-width':'none','max-height':'none','min-width':'0px','min-height':'0px',margin:'0px',transform:'none','object-fit':'contain','object-position':'center'})) setStyle(video,property,value);
+  }
+  function animateCrop(from) {
+    // Measure the site's restored picture so custom player sizing returns without a jump.
+    let to;
+    if(state.mode==='fill')to=fillRect();
+    else {restore();to=pictureRect();}
+    if(getComputedStyle(container).position==='static') setStyle(container,'position','relative');
+    setStyle(container,'overflow','hidden');
+    placeVideo(from);
+    const motion={frame:0,start:performance.now(),from,to};
+    cropMotion=motion;
+    const tick=now=>{
+      if(cropMotion!==motion)return;
+      const progress=Math.min(1,(now-motion.start)/180);
+      const eased=1-Math.pow(1-progress,3);
+      const current={};
+      for(const property of ['width','height','left','top'])current[property]=from[property]+(to[property]-from[property])*eased;
+      placeVideo(current);
+      if(progress<1)motion.frame=requestAnimationFrame(tick);
+      else {cropMotion=null;if(state.mode==='original')restore();else apply();}
+    };
+    motion.frame=requestAnimationFrame(tick);
+  }
   function chooseVideo() {
     return [...document.querySelectorAll('video')].filter(v => {const r=v.getBoundingClientRect();return r.width>160 && r.height>90 && getComputedStyle(v).visibility!=='hidden';}).sort((a,b)=>Number(!a.paused)-Number(!b.paused)||a.clientWidth*a.clientHeight-b.clientWidth*b.clientHeight).pop();
   }
@@ -48,7 +105,13 @@
   }
   async function change(patch, reset=false) {
     ++loadID;
-    state=reset?defaults():clean({...state,...patch});
+    const previousMode=state.mode;
+    const next=reset?defaults():clean({...state,...patch});
+    const animate=next.mode!==previousMode && video && container && video.videoWidth && video.videoHeight && container.clientWidth && container.clientHeight && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const from=animate?pictureRect():null;
+    stopCropMotion();
+    state=next;
+    if(animate)animateCrop(from);
     apply();
     try {if(state.remember) await chrome.storage.local.set({[key]:state}); else await chrome.storage.local.remove(key);} catch {return {ok:false,error:'Changed for this session, but settings could not be saved.'};}
     return status();
@@ -58,7 +121,7 @@
   function refresh() {
     const found=chooseVideo();
     if (found!==video || (found && chooseContainer(found)!==container)) {
-      restore(); observer.disconnect(); tooltip?.remove();tooltip=null; toolbarButton?.remove(); toolbarButton=null; host?.remove(); host=null; root=null;
+      stopCropMotion();restore(); observer.disconnect(); tooltip?.remove();tooltip=null; toolbarButton?.remove(); toolbarButton=null; host?.remove(); host=null; root=null;
       video=found; container=video?chooseContainer(video):null;
       if(video) { buildUI(); observer.observe(container); }
     }
@@ -130,23 +193,13 @@
   }
   function apply() {
     if(!video || !container) return;
-    if(state.mode==='original') restore();
-    else {
+    if(!cropMotion && state.mode==='original') restore();
+    else if(!cropMotion) {
       const w=container.clientWidth,h=container.clientHeight;
       if(w && h && video.videoWidth && video.videoHeight) {
         if(getComputedStyle(container).position==='static') setStyle(container,'position','relative');
         setStyle(container,'overflow','hidden');
-        const source=video.videoWidth/video.videoHeight;
-        const target=state.ratio==='auto'?w/h:Number(state.ratio);
-        // A manual content ratio describes the useful picture inside encoded black bars.
-        // Preserve intrinsic proportions, scale the useful picture to cover the player.
-        let usefulW=video.videoWidth, usefulH=video.videoHeight;
-        if(state.ratio!=='auto') {if(target>source) usefulH=usefulW/target; else usefulW=usefulH*target;}
-        const scale=Math.max(w/usefulW,h/usefulH)*state.zoom;
-        const vw=video.videoWidth*scale,vh=video.videoHeight*scale;
-        const x=(w-vw)/2 + state.x*Math.max(0,(vw-w)/2);
-        const y=(h-vh)/2 + state.y*Math.max(0,(vh-h)/2);
-        for(const [p,v] of Object.entries({position:'absolute',width:`${vw}px`,height:`${vh}px`,left:`${x}px`,top:`${y}px`,'max-width':'none','max-height':'none','min-width':'0px','min-height':'0px',margin:'0px',transform:'none','object-fit':'contain','object-position':'center'})) setStyle(video,p,v);
+        placeVideo(fillRect());
       }
     }
     if(toolbarButton){toolbarButton.setAttribute('aria-pressed',String(state.mode==='fill'));const label=state.mode==='fill'?'Restore original framing':'Fill player automatically';toolbarButton.setAttribute('aria-label',label);toolbarButton.setAttribute('data-tooltip-title',label);}
@@ -191,11 +244,11 @@
   }
   document.addEventListener('pointerdown',e=>{if(root&&!e.composedPath().includes(host)&&!e.composedPath().includes(toolbarButton))openPanel(false);},true);
   const observer=new ResizeObserver(schedule);
-  new MutationObserver(mutations=>{if(mutations.some(m=>(m.type==='attributes' && m.target===video)||(m.type==='childList' && [...m.addedNodes,...m.removedNodes].some(n=>n!==host))))schedule();}).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['style']});
+  new MutationObserver(mutations=>{if(mutations.some(m=>(m.type==='attributes' && m.target===video && !cropMotion)||(m.type==='childList' && [...m.addedNodes,...m.removedNodes].some(n=>n!==host))))schedule();}).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['style']});
   document.addEventListener('loadedmetadata',schedule,true);
   document.addEventListener('play',schedule,true);
-  document.addEventListener('fullscreenchange',()=>{hideTooltip();schedule();});
-  window.addEventListener('resize',()=>{hideTooltip();schedule();});
+  document.addEventListener('fullscreenchange',()=>{hideTooltip();stopCropMotion();schedule();});
+  window.addEventListener('resize',()=>{hideTooltip();stopCropMotion();schedule();});
   document.addEventListener('keydown',e=>{if(e.altKey&&e.shiftKey&&e.code==='KeyF'&&!e.repeat&&!e.composedPath().some(n=>n?.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(n?.tagName))){e.preventDefault();change({mode:state.mode==='fill'?'original':'fill'});}});
   chrome.runtime.onMessage.addListener((message,sender,reply)=>{
     if(sender.id!==chrome.runtime.id) return;

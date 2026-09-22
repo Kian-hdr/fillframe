@@ -16,11 +16,41 @@ try{
  await page.waitForFunction(()=>document.querySelector('video')?.videoWidth===1280 && document.querySelector('[data-fillframe]'));
  const original=await page.$eval('video',v=>v.getAttribute('style'));
  const click=async id=>page.evaluate(id=>document.querySelector('[data-fillframe]').shadowRoot.querySelector(id).click(),id);
- await click('#toggle');
+ const motion=await page.evaluate(async()=>{
+   const v=document.querySelector('video'),button=document.querySelector('[data-fillframe]').shadowRoot.querySelector('#toggle');
+   const heights=[v.getBoundingClientRect().height];button.click();
+   for(let i=0;i<16;i++){await new Promise(requestAnimationFrame);heights.push(v.getBoundingClientRect().height);}
+   return heights;
+ });
+ assert(motion.at(-1)>motion[0]+80,'fill grows the picture');
+ assert(motion.slice(1,-1).some(h=>h>motion[0]+4&&h<motion.at(-1)-4),'fill has visible intermediate frames');
+ results.push('Fill animates through intermediate picture sizes');
  await page.waitForFunction(()=>document.querySelector('video').style.width==='1000px');
  let rect=await page.$eval('video',v=>({w:v.getBoundingClientRect().width,h:v.getBoundingClientRect().height,top:parseFloat(v.style.top)}));
  assert(Math.abs(rect.w/rect.h-16/9)<.001);assert(rect.h>428);assert(rect.top<0);results.push('21:9 fill preserves ratio and crops top/bottom');
  await page.screenshot({path:'output/playwright/fill-wide.png'});
+ const reverse=await page.evaluate(async()=>{
+   const v=document.querySelector('video'),button=document.querySelector('[data-fillframe]').shadowRoot.querySelector('#toggle');
+   const heights=[v.getBoundingClientRect().height];button.click();
+   for(let i=0;i<16;i++){await new Promise(requestAnimationFrame);heights.push(v.getBoundingClientRect().height);}
+   return heights;
+ });
+ assert(reverse.at(-1)<reverse[0]-80,'Original shrinks the picture');
+ assert(reverse.slice(1,-1).some(h=>h<reverse[0]-4&&h>reverse.at(-1)+4),'Original has visible intermediate frames');
+ await click('#toggle');
+ await page.waitForFunction(()=>document.querySelector('video').style.height==='562.5px');
+ results.push('Original animates and Fill can be reapplied');
+ const reversal=await page.evaluate(async()=>{
+   const v=document.querySelector('video'),button=document.querySelector('[data-fillframe]').shadowRoot.querySelector('#toggle');
+   button.click();for(let i=0;i<3;i++)await new Promise(requestAnimationFrame);
+   const before=v.getBoundingClientRect().height;button.click();
+   const after=v.getBoundingClientRect().height;
+   for(let i=0;i<14;i++)await new Promise(requestAnimationFrame);
+   return {before,after,final:v.getBoundingClientRect().height};
+ });
+ assert(Math.abs(reversal.after-reversal.before)<3,'rapid reversal does not jump at the click');
+ assert(reversal.final>reversal.before+15,'rapid reversal completes toward Fill');
+ results.push('rapid reversal continues from the visible frame');
  await click('#more');await click('#remember');
  await page.reload();await page.waitForFunction(()=>document.querySelector('video')?.style.width==='1000px');results.push('remember persists across page reload');
  await page.$eval('#movie_player',el=>{el.style.width='800px';el.style.height='500px'});
@@ -66,6 +96,12 @@ try{
  results.push('native toolbar direct fill opens no controls');
  await page.click('[data-fillframe-toolbar]');
  await page.waitForFunction(()=>document.querySelector('video').style.width==='777px');
+ await page.emulateMediaFeatures([{name:'prefers-reduced-motion',value:'reduce'}]);
+ await page.click('[data-fillframe-toolbar]');
+ assert(await page.$eval('video',v=>v.style.getPropertyPriority('width')==='important'),'reduced motion fills immediately');
+ await page.click('[data-fillframe-toolbar]');
+ assert.equal(await page.$eval('video',v=>v.style.width),'777px','reduced motion restores immediately');
+ results.push('reduced motion skips the crop animation');
  await page.$eval('.ytp-right-controls-right',el=>el.replaceWith(el.cloneNode(true)));
  await page.waitForFunction(()=>document.querySelectorAll('[data-fillframe-toolbar]').length===1);
  results.push('toolbar toggle restores original and survives control replacement');
