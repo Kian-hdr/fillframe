@@ -5,7 +5,7 @@ Copy the prompt below into a coding assistant that can access your computer. It 
 ```text
 Set up Fillframe on my computer from https://github.com/Kian-hdr/fillframe.
 
-Goal: install the experimental Chrome extension and verify that its YouTube toolbar icon immediately toggles proportional crop-to-fill without opening a controls panel.
+Goal: install the experimental Chrome extension and verify that its YouTube toolbar icon directly toggles proportional crop-to-fill with a brief transition and without opening a controls panel.
 
 1. Inspect my OS, available desktop Chromium browsers and any existing Fillframe checkout/install. Ask which browser/profile only if ambiguous. Use a permanent user-owned folder, not a temporary download/cache folder. Do not overwrite an existing checkout or discard local changes.
 2. Fetch the repository, read README.md, SETUP-PROMPT.md, manifest.json and the packaging script, and inspect the source/permissions before running scripts. Use the repository’s actual current version; do not assume a release ZIP or Web Store listing exists. Preserve LICENSE and THIRD-PARTY-LICENSE.txt.

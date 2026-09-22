@@ -16,9 +16,9 @@ Copy the [setup prompt](SETUP-PROMPT.md) into your coding assistant. It covers p
 2. Open `chrome://extensions` in desktop Chrome and enable Developer mode.
 3. Click **Load unpacked** and select the **Fillframe** folder inside **release**. Keep that folder in place.
 4. Pin Fillframe from Chrome's Extensions menu and refresh existing video tabs.
-5. Start a video. Use **Fill** in the player or **Fill player** in the toolbar popup. On YouTube, click the crop-frame icon beside fullscreen: it immediately switches to automatic fill, without opening controls. Click again to restore original. Geometry follows the player size, including fullscreen and resize. Other players retain the floating fallback.
+5. Start a video. Use **Fill** in the player or **Fill player** in the toolbar popup. On YouTube, click the crop-frame icon beside fullscreen: it switches directly to automatic fill, without opening controls. Click again to restore original. Both actions use a brief crop transition; resize and fullscreen geometry update immediately. Other players retain the floating fallback.
 
-Use **Original** to restore framing immediately. **Picture ratio** describes the useful picture inside any encoded bars; **Video size** uses the video's intrinsic dimensions. Filling crops edges without stretching. Extra zoom and position controls fine-tune the result. Remembered settings are local to this browser, site and display-shape class (compact, standard or wide), not a unique physical monitor. Alt+Shift+F toggles framing while the page has focus outside text fields.
+Use **Original** to restore framing with the same brief transition. The transition is skipped when Reduce Motion is enabled. **Picture ratio** describes the useful picture inside any encoded bars; **Video size** uses the video's intrinsic dimensions. Filling crops edges without stretching. Extra zoom and position controls fine-tune the result. Remembered settings are local to this browser, site and display-shape class (compact, standard or wide), not a unique physical monitor. Alt+Shift+F toggles framing while the page has focus outside text fields.
 
 Uninstall through the extension's **Remove** button and refresh affected tabs. Disable other video-zoom extensions on the same page to avoid competing modifications.
 
@@ -30,7 +30,7 @@ No automatic pixel-based black-bar detection, HDR processing, frame interpolatio
 
 ## Verification
 
-Version 0.1.4 was checked in isolated Chrome 153.0.8010.36: ten fixture/popup checks passed, plus live YouTube direct toolbar fill/fullscreen/restoration and native-tooltip styling/keyboard checks. Running the tests writes fresh evidence under `output/playwright/`; local recordings and browser screenshots are not published. Fixture tests use the real extension with controlled video and page content; they do not prove streaming-provider support. Physical MacBook/ultrawide transitions, Netflix/Disney+ playback and other browser brands require separate validation.
+Version 0.1.6 was checked in isolated Chrome 153.0.8010.36: fixture/popup checks covered Fill and Original intermediate frames, rapid reversal, Reduce Motion, geometry, style restoration and toolbar behavior. A live public YouTube check passed playback, direct toolbar fill, fullscreen geometry and restoration; the final fullscreen screenshot was inspected. Static package validation and JavaScript syntax checks passed. Running the tests writes fresh evidence under `output/playwright/`; local recordings and browser screenshots are not published. Fixture tests use the real extension with controlled video and page content; they do not prove streaming-provider support. Physical MacBook/ultrawide transitions, Netflix/Disney+ playback and other browser brands require separate validation.
 
 ## Development
 
