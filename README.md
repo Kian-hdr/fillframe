@@ -1,10 +1,10 @@
-# Fillframe
+<h1 align="center">Fillframe</h1>
 
-A free Chrome extension for framing web video.
+<p align="center">A free Chrome extension for framing web video.</p>
 
-<img src="assets/icons/icon128.png" alt="Fillframe app icon" width="72">
+<p align="center"><img src="assets/icons/icon128.png" alt="Fillframe app icon" width="72"></p>
 
-[Install locally](#install-locally) · [Assistant setup](#set-up-with-an-ai-assistant) · [Compatibility](#compatibility-and-limits)
+<p align="center"><a href="#install-locally">Install locally</a> · <a href="#set-up-with-an-ai-assistant">Assistant setup</a> · <a href="#compatibility-and-limits">Compatibility</a></p>
 
 An experimental, free Manifest V3 extension for framing web video. No account, paywall, telemetry or runtime dependency.
 
