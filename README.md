@@ -1,12 +1,12 @@
-<p align="center">
-  <img src="assets/icons/icon128.png" width="96" height="96" alt="Fillframe app icon">
-</p>
+# Fillframe
 
-<h1 align="center">Fillframe</h1>
+A free Chrome extension for framing web video.
 
-An experimental, free Manifest V3 extension for framing web video. No account, paywall, telemetry or runtime dependency.
+<img src="assets/icons/icon128.png" alt="Fillframe app icon" width="72">
 
 [Install locally](#install-locally) · [Assistant setup](#set-up-with-an-ai-assistant) · [Compatibility](#compatibility-and-limits)
+
+An experimental, free Manifest V3 extension for framing web video. No account, paywall, telemetry or runtime dependency.
 
 ## Set up with an AI assistant
 
